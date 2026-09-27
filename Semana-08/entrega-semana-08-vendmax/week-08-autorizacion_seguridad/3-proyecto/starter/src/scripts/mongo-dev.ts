@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // ============================================================================
@@ -21,23 +20,10 @@ async function main(): Promise<void> {
     instance: {
       port: 27017, // mismo puerto que usaría Docker
       dbName: 'vendmax_semana08',
-=======
-﻿import { MongoMemoryServer } from 'mongodb-memory-server';
-
-// MongoDB de desarrollo, sin Docker. Uso: pnpm mongo
-async function main(): Promise<void> {
-  console.log('Preparando MongoDB (la primera vez descarga el binario)...');
-
-  const mongo = await MongoMemoryServer.create({
-    instance: {
-      port: 27017,
-      dbName: 'vendmax_dev',
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
       storageEngine: 'wiredTiger',
     },
   });
 
-<<<<<<< HEAD
   console.log('\n✅ MongoDB escuchando en', mongo.getUri());
   console.log('   .env  →  MONGODB_URI=mongodb://localhost:27017/vendmax_semana08');
   console.log('\n   Deja ESTA terminal abierta.');
@@ -47,14 +33,6 @@ async function main(): Promise<void> {
   // Cierre ordenado
   const stop = async (): Promise<void> => {
     console.log('\n🛑 Deteniendo MongoDB...');
-=======
-  console.log('');
-  console.log('MongoDB escuchando en ' + mongo.getUri());
-  console.log('Deja ESTA terminal abierta. Ctrl+C para detener.');
-  console.log('En otra terminal: pnpm seed -> pnpm dev');
-
-  const stop = async (): Promise<void> => {
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
     await mongo.stop();
     process.exit(0);
   };
@@ -63,10 +41,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-<<<<<<< HEAD
   console.error('❌ No se pudo iniciar MongoDB:', err);
-=======
-  console.error('No se pudo iniciar MongoDB:', err);
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
   process.exit(1);
 });

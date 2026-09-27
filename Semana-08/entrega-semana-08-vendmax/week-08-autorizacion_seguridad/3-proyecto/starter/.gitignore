@@ -1,5 +1,4 @@
 node_modules/
-<<<<<<< HEAD
 .pnpm-store/
 dist/
 build/
@@ -22,8 +21,3 @@ mongodb-binaries/
 .DS_Store
 Thumbs.db
 *.swp
-=======
-dist/
-.env
-*.log
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8

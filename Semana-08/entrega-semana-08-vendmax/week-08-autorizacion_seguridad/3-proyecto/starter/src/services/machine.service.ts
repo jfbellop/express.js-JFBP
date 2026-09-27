@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import mongoose, { QueryFilter } from 'mongoose';
 import { Machine, IMachine } from '../models/machine.model.js';
 import { AppError } from '../errors/AppError.js';
@@ -16,35 +15,12 @@ import type {
 // pero no de quién es la máquina que intentas tocar.
 // ============================================================================
 
-=======
-import mongoose, { type QueryFilter } from 'mongoose';
-import { IMachine, MachineDocument } from '../models/machine.model';
-import * as machineRepository from '../repositories/machine.repository';
-import {
-  CreateMachineDto,
-  UpdateMachineDto,
-  ListMachinesQuery,
-} from '../schemas/machine.schema';
-import { AppError } from '../errors/AppError';
-
-// ============================================
-// SERVICIO — Máquinas Expendedoras (lógica de negocio)
-// ============================================
-
-export interface PaginatedResult<T> {
-  data: T[];
-  meta: { total: number; page: number; limit: number; pages: number };
-}
-
-/** Evita que un id malformado reviente como CastError 500. */
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
 function assertValidId(id: string): void {
   if (!mongoose.isValidObjectId(id)) {
     throw new AppError(400, 'El id proporcionado no es válido');
   }
 }
 
-<<<<<<< HEAD
 export async function findAll(query: ListMachinesQuery): Promise<{
   data: IMachine[];
   meta: { total: number; page: number; limit: number; pages: number };
@@ -64,42 +40,17 @@ export async function findAll(query: ListMachinesQuery): Promise<{
 
   return {
     data,
-=======
-export async function getAll(query: ListMachinesQuery): Promise<PaginatedResult<MachineDocument>> {
-  const { status, type, location, page, limit } = query;
-
-  const filter: QueryFilter<IMachine> = {};
-  if (status) filter.status = status;
-  if (type) filter.type = type;
-  // Búsqueda parcial por sede, insensible a mayúsculas.
-  // Se escapa la entrada para que el usuario no pueda inyectar una regex costosa (ReDoS).
-  if (location) {
-    filter.location = { $regex: location.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
-  }
-
-  const { items, total } = await machineRepository.findAll(filter, { page, limit });
-
-  return {
-    data: items,
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
     meta: { total, page, limit, pages: Math.max(1, Math.ceil(total / limit)) },
   };
 }
 
-<<<<<<< HEAD
 export async function findById(id: string): Promise<IMachine> {
   assertValidId(id);
   const machine = await Machine.findById(id);
-=======
-export async function getById(id: string): Promise<MachineDocument> {
-  assertValidId(id);
-  const machine = await machineRepository.findById(id);
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
   if (!machine) throw new AppError(404, 'Máquina no encontrada');
   return machine;
 }
 
-<<<<<<< HEAD
 export async function create(data: CreateMachineDto, userId: string): Promise<IMachine> {
   const existing = await Machine.findOne({ code: data.code });
   if (existing) {
@@ -158,52 +109,10 @@ export async function update(
     returnDocument: 'after',
     runValidators: true,
   });
-=======
-export async function create(dto: CreateMachineDto, userId: string): Promise<MachineDocument> {
-  const code = dto.code.toUpperCase();
-
-  // Regla de negocio: el código físico es irrepetible en toda la red
-  const existing = await machineRepository.findByCode(code);
-  if (existing) {
-    throw new AppError(409, `Ya existe una máquina registrada con el código ${code}`);
-  }
-
-  // Regla de negocio: solo las máquinas de bebidas/café reportan temperatura
-  if (dto.temperatureC !== undefined && dto.type === 'snacks') {
-    throw new AppError(422, 'Una máquina de snacks no lleva control de temperatura');
-  }
-
-  return machineRepository.create({ ...dto, code, createdBy: userId });
-}
-
-export async function update(id: string, dto: UpdateMachineDto): Promise<MachineDocument> {
-  const current = await getById(id); // lanza 404 si no existe
-
-  // Regla de negocio: el código es único; si se cambia, no puede chocar con otra máquina
-  if (dto.code) {
-    const code = dto.code.toUpperCase();
-    const other = await machineRepository.findByCode(code);
-    if (other && other._id.toString() !== id) {
-      throw new AppError(409, `Ya existe una máquina registrada con el código ${code}`);
-    }
-    dto = { ...dto, code };
-  }
-
-  // Regla de negocio: una máquina dada de baja no vuelve a operar sin revisión previa
-  if (current.status === 'fuera_de_servicio' && dto.status === 'operativa') {
-    throw new AppError(
-      409,
-      "Una máquina 'fuera_de_servicio' debe pasar primero por 'mantenimiento'",
-    );
-  }
-
-  const updated = await machineRepository.updateById(id, dto);
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
   if (!updated) throw new AppError(404, 'Máquina no encontrada');
   return updated;
 }
 
-<<<<<<< HEAD
 // Retiro de recaudo: operación administrativa y auditable.
 export async function collectCash(
   id: string,
@@ -260,19 +169,4 @@ export async function cashReport(): Promise<{
     .map((m) => ({ code: m.code, location: m.location, cashBalanceCents: m.cashBalanceCents }));
 
   return { totalMachines: machines.length, totalCashCents, byStatus, topMachines };
-=======
-export async function remove(id: string): Promise<void> {
-  const machine = await getById(id); // lanza 404 si no existe
-
-  // Regla de negocio: no se da de baja una máquina con dinero adentro
-  if (machine.cashBalanceCents > 0) {
-    throw new AppError(
-      409,
-      'No se puede eliminar la máquina: primero debe retirarse el recaudo pendiente',
-    );
-  }
-
-  const deleted = await machineRepository.deleteById(id);
-  if (!deleted) throw new AppError(404, 'Máquina no encontrada');
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
 }

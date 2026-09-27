@@ -1,5 +1,4 @@
 import 'dotenv/config';
-<<<<<<< HEAD
 import { app } from './app.js';
 import { connectDB } from './lib/mongoose.js';
 import { User } from './models/user.model.js';
@@ -27,21 +26,5 @@ async function main(): Promise<void> {
 
 main().catch((err: unknown) => {
   console.error('Failed to start server:', err);
-=======
-import { app } from './app';
-import { connectDB } from './lib/mongoose';
-
-const PORT = Number(process.env.PORT) || 3000;
-
-async function main(): Promise<void> {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
-
-main().catch((err) => {
-  console.error('Fatal error on startup:', err);
->>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8
   process.exit(1);
 });
