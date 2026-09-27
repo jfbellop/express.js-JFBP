@@ -1,0 +1,51 @@
+# Ejercicio 01 - RBAC con requireRole()
+# Ejecutado: 2026-09-26 19:27 UTC
+# Comando: pnpm test:flow  (con 'pnpm mongo' y 'pnpm dev' corriendo en otras terminales)
+
+════════════════════════════════════════════════════════════════════════
+  Ejercicio 01 — RBAC con requireRole()  (http://localhost:3000/api/v1)
+════════════════════════════════════════════════════════════════════════
+
+0. Ruta pública (sin middleware de autenticación)
+  ✅ GET /health → 200 — status=200
+  ✅ GET /public SIN token → 200 — status=200
+
+1. Sin autenticación: todo lo privado responde 401
+  ✅ GET /dashboard sin token → 401 — status=401
+  ✅ GET /admin/users sin token → 401 — status=401
+  ✅ Header Authorization malformado → 401 — status=401
+  ✅ Token inválido → 401 — status=401
+
+2. Login como rol "user"
+  ✅ POST /auth/login (user) → 200 — status=200
+  ✅ La respuesta trae accessToken
+  ✅ La respuesta trae role=user — role=user
+  ✅ PASO 2/3 — el JWT contiene el campo role — payload.role=user
+  ✅ El JWT contiene sub y email
+
+3. Rol "user": entra a lo suyo, NO a lo de admin
+  ✅ GET /dashboard con token user → 200 — status=200
+  ✅ GET /users/dashboard con token user → 200 — status=200
+  ✅ GET /admin/users con token user → 403 (no 401) — status=403
+  ✅ El 403 explica qué rol hacía falta — Access denied. Required roles: admin
+  ✅ GET /admin/stats con token user → 403 — status=403
+
+4. Login como rol "admin"
+  ✅ POST /auth/login (admin) → 200 — status=200
+  ✅ El JWT del admin lleva role=admin — payload.role=admin
+
+5. Rol "admin": acceso total
+  ✅ GET /admin/users con token admin → 200 — status=200
+  ✅ Devuelve la lista de usuarios — total=2
+  ✅ GET /admin/stats con token admin → 200 — status=200
+  ✅ GET /dashboard con token admin → 200 (ruta de ambos roles) — status=200
+
+6. /auth/me y principio de menor privilegio en el registro
+  ✅ GET /auth/me con token admin → 200 — status=200
+  ✅ POST /auth/register → 201 — status=201
+  ✅ El usuario nuevo nace con role=user (menor privilegio) — role=user
+  ✅ El usuario recién registrado NO puede entrar a /admin → 403 — status=403
+
+════════════════════════════════════════════════════════════════════════
+  RESULTADO: 26 pruebas OK, 0 fallidas
+════════════════════════════════════════════════════════════════════════

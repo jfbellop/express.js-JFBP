@@ -1,0 +1,159 @@
+###############################################################################
+# VendMax API - Semana 07 (Autenticacion JWT) - REST Client
+#
+# ANTES: Terminal 1 -> pnpm mongo   |   Terminal 2 -> pnpm dev
+# USO:   clic en el enlace "Send Request" que aparece sobre cada bloque.
+# ORDEN: de arriba hacia abajo. El 401 del bloque 01 solo se reproduce
+#        ANTES de hacer login (REST Client guarda cookies como un navegador).
+# Si repites todo desde cero, cambia @email o el registro dara 409.
+###############################################################################
+
+@baseUrl = http://localhost:3000/api/v1
+@email = capturas@vendmax.co
+@password = Vendmax2026!
+
+### 00 - Health (debe responder 200)
+GET {{baseUrl}}/health
+
+### 01 - CAPTURA: /machines SIN sesion -> 401  (ejecutar ANTES del login)
+GET {{baseUrl}}/machines
+
+### 02 - CAPTURA: Registro -> 201 (la respuesta NO trae password)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "name": "Tecnico Ruta Norte"
+}
+
+### 03 - Email repetido -> 409
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "name": "Tecnico Ruta Norte"
+}
+
+### 04 - Password debil -> 400 (lo valida Zod)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "debil@vendmax.co",
+  "password": "123",
+  "name": "X"
+}
+
+### 05 - CAPTURA: Login -> 200 + Set-Cookie HttpOnly (mira los headers)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### 06 - Password incorrecto -> 401 "Credenciales invalidas"
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "ClaveMala1!"
+}
+
+### 07 - Email inexistente -> 401 con EL MISMO mensaje (anti user-enumeration)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "noexiste@vendmax.co",
+  "password": "ClaveMala1!"
+}
+
+### 08 - CAPTURA: Ruta protegida /auth/me -> 200
+GET {{baseUrl}}/auth/me
+
+### 09 - CAPTURA: Crear maquina -> 201 (de aqui sale el _id de los siguientes)
+# @name crearMaquina
+POST {{baseUrl}}/machines
+Content-Type: application/json
+
+{
+  "code": "VM-010",
+  "model": "SnackMaster 3000",
+  "type": "snacks",
+  "location": "Sede Norte - Piso 1",
+  "slots": 36,
+  "lastRestockedAt": "2026-09-25T08:00:00.000Z"
+}
+
+### 10 - Codigo duplicado -> 409 (regla de negocio)
+POST {{baseUrl}}/machines
+Content-Type: application/json
+
+{
+  "code": "VM-010",
+  "model": "Otra",
+  "type": "snacks",
+  "location": "Sede Sur",
+  "slots": 20
+}
+
+### 11 - Payload invalido -> 400
+POST {{baseUrl}}/machines
+Content-Type: application/json
+
+{
+  "code": "XX-1",
+  "model": "A",
+  "type": "nave",
+  "location": "x",
+  "slots": 0
+}
+
+### 12 - CAPTURA: Listar maquinas -> 200
+GET {{baseUrl}}/machines
+
+### 13 - Listar con filtros y paginacion -> 200
+GET {{baseUrl}}/machines?status=operativa&type=bebidas&page=1&limit=5
+
+### 14 - CAPTURA: Detalle por id -> 200 (toma el id del bloque 09 solo)
+GET {{baseUrl}}/machines/{{crearMaquina.response.body.$._id}}
+
+### 15 - Id inexistente -> 404
+GET {{baseUrl}}/machines/64b7f3c2a4d1e2f3a4b5c6d7
+
+### 16 - Id malformado -> 400
+GET {{baseUrl}}/machines/abc123
+
+### 17 - CAPTURA: Actualizar (PATCH) -> 200
+PATCH {{baseUrl}}/machines/{{crearMaquina.response.body.$._id}}
+Content-Type: application/json
+
+{
+  "status": "mantenimiento",
+  "notes": "Compresor en revision"
+}
+
+### 18 - CAPTURA: Refresh -> 200 con cookies NUEVAS (rotacion)
+POST {{baseUrl}}/auth/refresh
+
+### 19 - CAPTURA: Eliminar -> 204 No Content
+DELETE {{baseUrl}}/machines/{{crearMaquina.response.body.$._id}}
+
+### 20 - Ya no existe -> 404
+GET {{baseUrl}}/machines/{{crearMaquina.response.body.$._id}}
+
+### 21 - CAPTURA: Logout -> 200 (limpia las cookies)
+POST {{baseUrl}}/auth/logout
+
+### 22 - CAPTURA: Refresh despues del logout -> 401 (hash borrado en la DB)
+POST {{baseUrl}}/auth/refresh
+
+### 23 - /auth/me despues del logout -> 401
+GET {{baseUrl}}/auth/me

@@ -1,0 +1,398 @@
+###############################################################################
+# VendMax API — Semana 08 (Autorización y Seguridad)
+# Colección para la extensión REST Client de VS Code (humao.rest-client)
+#
+# ANTES DE EMPEZAR:
+#   Terminal 1 → pnpm mongo    (MongoDB en localhost:27017)
+#   Terminal 2 → pnpm seed     (3 usuarios + 6 máquinas)
+#   Terminal 2 → pnpm dev      (VendMax API → http://localhost:3000)
+#
+# CÓMO SE USA:
+#   Sobre cada bloque aparece un enlace gris "Send Request". Clic ahí y la
+#   respuesta se abre en un panel lateral con status, headers y body.
+#
+# EJECUTA LOS BLOQUES EN ORDEN. Los bloques marcados con "# @name" guardan su
+# respuesta y los siguientes reutilizan el token automáticamente
+# ({{loginAdmin.response.body.accessToken}}), así no hay que copiar y pegar
+# JWTs a mano.
+#
+# ⚠️ El bloque 30 agota a propósito el rate limit de /auth (5 intentos por
+#    cada 15 minutos). Después de ejecutarlo, reinicia `pnpm dev` si quieres
+#    volver a iniciar sesión.
+#
+# 📸 = bloque que conviene capturar para las evidencias de la rúbrica.
+###############################################################################
+
+@baseUrl = http://localhost:3000/api/v1
+
+@adminEmail = admin@vendmax.co
+@adminPassword = Admin1234!
+@operadorEmail = operador@vendmax.co
+@operadorPassword = Operador1234!
+@tecnicoEmail = tecnico@vendmax.co
+@tecnicoPassword = Tecnico1234!
+
+
+###############################################################################
+# 0 · CAPAS DE SEGURIDAD HTTP
+###############################################################################
+
+### 00 · 📸 Health + cabeceras de Helmet
+# Mira la pestaña Headers de la respuesta:
+#   x-content-type-options: nosniff
+#   x-frame-options: SAMEORIGIN
+#   strict-transport-security: max-age=31536000; includeSubDomains
+#   content-security-policy: default-src 'self'; ...
+#   x-powered-by: NO APARECE (helmet la elimina)
+#   ratelimit-limit: 100  /  x-ratelimit-remaining: 99
+GET {{baseUrl}}/health
+
+### 01 · 📸 CORS — origen permitido (whitelist)
+# Respuesta 200 + access-control-allow-origin: http://localhost:5173
+GET {{baseUrl}}/machines
+Origin: http://localhost:5173
+
+### 02 · 📸 CORS — origen NO permitido → 403
+# Sin cabecera access-control-allow-origin y con {"error":"CORS: origin not allowed"}
+GET {{baseUrl}}/machines
+Origin: http://evil.com
+
+### 03 · CORS — preflight OPTIONS desde el origen permitido → 204
+OPTIONS {{baseUrl}}/machines
+Origin: http://localhost:5173
+Access-Control-Request-Method: PATCH
+
+### 04 · 📸 NoSQL injection en el login → 400 (nunca un token)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": { "$gt": "" },
+  "password": { "$gt": "" }
+}
+
+
+###############################################################################
+# 1 · LECTURA PÚBLICA (sin token) — el catálogo es público
+###############################################################################
+
+### 10 · 📸 Catálogo sin token → 200
+# Fíjate en lo que NO aparece: cashBalanceCents ni createdBy.
+# La respuesta incluye "access": "público".
+# Este bloque da los ids que usan los siguientes: ejecútalo primero.
+# @name listado
+GET {{baseUrl}}/machines
+
+### 11 · Catálogo filtrado por estado y tipo (paginado)
+GET {{baseUrl}}/machines?status=operativa&type=bebidas&page=1&limit=5
+
+### 12 · Detalle de una máquina sin token → 200 (campos públicos)
+# @name detallePublico
+GET {{baseUrl}}/machines/{{listado.response.body.data[0].id}}
+
+### 13 · Id inexistente pero válido → 404
+GET {{baseUrl}}/machines/000000000000000000000000
+
+### 14 · Id malformado → 400
+GET {{baseUrl}}/machines/abc123
+
+
+###############################################################################
+# 2 · ESCRITURA SIN SESIÓN → 401 (autenticación)
+###############################################################################
+
+### 20 · 📸 POST sin token → 401
+POST {{baseUrl}}/machines
+Content-Type: application/json
+
+{
+  "code": "VM-900",
+  "modelName": "Intruso 1000",
+  "type": "snacks",
+  "location": "Sitio no autorizado",
+  "slots": 10
+}
+
+### 21 · PATCH sin token → 401
+PATCH {{baseUrl}}/machines/{{listado.response.body.data[0].id}}
+Content-Type: application/json
+
+{ "location": "Ubicación falsa" }
+
+### 22 · DELETE sin token → 401
+DELETE {{baseUrl}}/machines/{{listado.response.body.data[0].id}}
+
+### 23 · Reporte de administración sin token → 401
+GET {{baseUrl}}/machines/reportes/recaudo
+
+
+###############################################################################
+# 3 · LOGIN DE LOS TRES ACTORES
+###############################################################################
+
+### 30 · Login OPERADOR (rol user, dueño de VM-001..VM-004)
+# @name loginOperador
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{operadorEmail}}",
+  "password": "{{operadorPassword}}"
+}
+
+### 31 · Login TÉCNICO (rol user, dueño de VM-005 y VM-006)
+# @name loginTecnico
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{tecnicoEmail}}",
+  "password": "{{tecnicoPassword}}"
+}
+
+### 32 · 📸 Login ADMIN (rol admin)
+# La respuesta trae accessToken y role: "admin".
+# Pega el accessToken en https://jwt.io para ver el claim "role" firmado.
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+### 33 · Perfil del usuario autenticado
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+
+###############################################################################
+# 4 · VISIBILIDAD DE CAMPOS SEGÚN EL ROL (autorización a nivel de campo)
+###############################################################################
+
+### 40 · 📸 Catálogo como TÉCNICO (rol user)
+# @name listadoTecnico
+# Ve createdBy y notes de todas, pero cashBalanceCents SOLO de VM-005 y VM-006
+GET {{baseUrl}}/machines
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+### 41 · 📸 Catálogo como ADMIN
+# Ve cashBalanceCents de TODAS las máquinas
+GET {{baseUrl}}/machines
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+
+###############################################################################
+# 5 · CREAR MÁQUINA (autenticado, cualquier rol)
+###############################################################################
+
+### 50 · 📸 Crear máquina como técnico → 201
+# @name crearMaquina
+POST {{baseUrl}}/machines
+Content-Type: application/json
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+{
+  "code": "VM-777",
+  "modelName": "SnackMaster 3000",
+  "type": "snacks",
+  "location": "Sede Norte — Piso 1",
+  "slots": 36,
+  "notes": "Instalada esta semana"
+}
+
+### 51 · Código duplicado → 409
+POST {{baseUrl}}/machines
+Content-Type: application/json
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+{
+  "code": "VM-777",
+  "modelName": "SnackMaster 3000",
+  "type": "snacks",
+  "location": "Otra sede",
+  "slots": 20
+}
+
+### 52 · Payload inválido (código mal formado, tipo inexistente, 0 bandejas) → 400
+POST {{baseUrl}}/machines
+Content-Type: application/json
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+{
+  "code": "XX-1",
+  "modelName": "A",
+  "type": "nave-espacial",
+  "location": "x",
+  "slots": 0
+}
+
+### 53 · 📸 HTML en un campo de texto → 400 (anti XSS almacenado)
+POST {{baseUrl}}/machines
+Content-Type: application/json
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+{
+  "code": "VM-999",
+  "modelName": "<script>alert('xss')</script>",
+  "type": "snacks",
+  "location": "Sede XSS",
+  "slots": 10
+}
+
+### 54 · Regla de dominio: snacks con temperatura → 422
+POST {{baseUrl}}/machines
+Content-Type: application/json
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+{
+  "code": "VM-998",
+  "modelName": "CoolDrink 500",
+  "type": "snacks",
+  "location": "Sede Sur",
+  "slots": 10,
+  "temperatureC": 4
+}
+
+### 55 · Mass assignment: intentar colar campos privilegiados
+# cashBalanceCents, createdBy y active no están en el schema de creación:
+# Zod los descarta silenciosamente. Comprueba en la respuesta que el recaudo
+# sigue en 0 y que createdBy es el técnico, no lo que se envió.
+POST {{baseUrl}}/machines
+Content-Type: application/json
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+{
+  "code": "VM-888",
+  "modelName": "MixVend Pro",
+  "type": "mixta",
+  "location": "Sede Occidente",
+  "slots": 30,
+  "cashBalanceCents": 99999999,
+  "createdBy": "000000000000000000000000"
+}
+
+
+###############################################################################
+# 6 · PATCH — dueño sí, otro usuario no, admin siempre
+###############################################################################
+
+### 60 · 📸 El DUEÑO edita su máquina → 200
+PATCH {{baseUrl}}/machines/{{crearMaquina.response.body.data.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+{
+  "status": "mantenimiento",
+  "notes": "Compresor en revision"
+}
+
+### 61 · 📸 OTRO usuario autenticado intenta editarla → 403
+# Está autenticado (401 sería incorrecto): lo que no tiene es permiso.
+PATCH {{baseUrl}}/machines/{{crearMaquina.response.body.data.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginOperador.response.body.accessToken}}
+
+{
+  "location": "Me la apropio"
+}
+
+### 62 · 📸 El ADMIN edita cualquier máquina → 200
+PATCH {{baseUrl}}/machines/{{crearMaquina.response.body.data.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+{
+  "notes": "Revisada por administracion"
+}
+
+### 63 · PATCH con el cuerpo vacío → 400
+PATCH {{baseUrl}}/machines/{{crearMaquina.response.body.data.id}}
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+{}
+
+
+###############################################################################
+# 7 · RUTAS EXCLUSIVAS DE ADMIN (requireRole('admin'))
+###############################################################################
+
+### 70 · 📸 Reporte de recaudo con rol user → 403
+GET {{baseUrl}}/machines/reportes/recaudo
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+### 71 · 📸 Reporte de recaudo con rol admin → 200
+GET {{baseUrl}}/machines/reportes/recaudo
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+### 72 · 📸 Retirar recaudo siendo el DUEÑO (rol user) → 403
+# Ser dueño no lo es todo: mover dinero es competencia de administración.
+POST {{baseUrl}}/machines/{{listado.response.body.data[0].id}}/recaudo
+Content-Type: application/json
+Authorization: Bearer {{loginOperador.response.body.accessToken}}
+
+{}
+
+### 73 · Retirar recaudo como admin → 200
+POST {{baseUrl}}/machines/{{listado.response.body.data[0].id}}/recaudo
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+{ "collectedBy": "Auditoria interna" }
+
+### 74 · Retirar recaudo otra vez (ya está en cero) → 409
+POST {{baseUrl}}/machines/{{listado.response.body.data[0].id}}/recaudo
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+{}
+
+
+###############################################################################
+# 8 · DELETE — solo admin
+###############################################################################
+
+### 80 · 📸 El dueño intenta eliminar su propia máquina → 403
+DELETE {{baseUrl}}/machines/{{crearMaquina.response.body.data.id}}
+Authorization: Bearer {{loginTecnico.response.body.accessToken}}
+
+### 81 · 📸 El admin elimina → 200
+DELETE {{baseUrl}}/machines/{{crearMaquina.response.body.data.id}}
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+### 82 · La máquina ya no existe → 404
+GET {{baseUrl}}/machines/{{crearMaquina.response.body.data.id}}
+
+### 83 · Eliminar una máquina con recaudo pendiente → 409
+# Primero hay que retirar el dinero (bloque 73)
+DELETE {{baseUrl}}/machines/{{listado.response.body.data[5].id}}
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+
+###############################################################################
+# 9 · ERRORES SEGUROS Y RATE LIMITING
+###############################################################################
+
+### 90 · Ruta inexistente → 404 sin stack trace
+GET {{baseUrl}}/no-existe
+
+### 91 · Token manipulado → 401
+GET {{baseUrl}}/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload-falso.firma-invalida
+
+### 92 · 📸 Fuerza bruta: repite este bloque 6 veces → el 6º responde 429
+# {"error":"Too many login attempts, please try again later"}
+# ⚠️ Después de esto hay que reiniciar `pnpm dev` para poder volver a loguearse.
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "ClaveIncorrecta1!"
+}
+
+### 93 · 📸 Con /auth bloqueado, el resto de la API sigue viva → 200
+# El rate limit de autenticación es quirúrgico, no tumba el servicio.
+GET {{baseUrl}}/machines

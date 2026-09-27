@@ -1,0 +1,551 @@
+{
+  "client": "Thunder Client",
+  "collectionName": "VendMax API — Semana 07 (Auth JWT)",
+  "dateExported": "2026-09-26T15:00:00.000Z",
+  "version": "1.2",
+  "folders": [
+    {
+      "_id": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "1. Auth",
+      "containerId": "",
+      "created": "2026-09-26T15:00:00.000Z",
+      "sortNum": 10000
+    },
+    {
+      "_id": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "2. Máquinas",
+      "containerId": "",
+      "created": "2026-09-26T15:00:00.000Z",
+      "sortNum": 20000
+    }
+  ],
+  "requests": [
+    {
+      "_id": "28be0bbd-d276-47e5-8e94-86245eca1539",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "00 · Health",
+      "url": "http://localhost:3000/api/v1/health",
+      "method": "GET",
+      "sortNum": 1000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ]
+    },
+    {
+      "_id": "31656f0e-42e6-40a5-9e35-a29cf05d8c4b",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "01 · Register",
+      "url": "http://localhost:3000/api/v1/auth/register",
+      "method": "POST",
+      "sortNum": 2000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "201"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"tecnico@vendmax.co\",\n  \"password\": \"Vendmax2026!\",\n  \"name\": \"Técnico Ruta Norte\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "5bd04606-5572-43f7-b4d0-45223a31e966",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "02 · Register duplicado (409)",
+      "url": "http://localhost:3000/api/v1/auth/register",
+      "method": "POST",
+      "sortNum": 3000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "409"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"tecnico@vendmax.co\",\n  \"password\": \"Vendmax2026!\",\n  \"name\": \"Técnico Ruta Norte\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "59f2929e-77db-475b-874e-63534cb441ae",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "03 · Register password débil (400)",
+      "url": "http://localhost:3000/api/v1/auth/register",
+      "method": "POST",
+      "sortNum": 4000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "400"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"debil@vendmax.co\",\n  \"password\": \"123\",\n  \"name\": \"X\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "4b6f8a66-b537-46b1-9014-aae3bd24854b",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "04 · Login (guarda cookies)",
+      "url": "http://localhost:3000/api/v1/auth/login",
+      "method": "POST",
+      "sortNum": 5000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"tecnico@vendmax.co\",\n  \"password\": \"Vendmax2026!\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "e5d3aa6c-ccdd-4dd6-b16b-749260bfdd91",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "05 · Login credenciales inválidas (401)",
+      "url": "http://localhost:3000/api/v1/auth/login",
+      "method": "POST",
+      "sortNum": 6000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "401"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"tecnico@vendmax.co\",\n  \"password\": \"ClaveMala1!\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "84390cda-85e9-471d-9848-80760ea3930d",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "06 · Me (ruta protegida)",
+      "url": "http://localhost:3000/api/v1/auth/me",
+      "method": "GET",
+      "sortNum": 7000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ]
+    },
+    {
+      "_id": "4328337d-79f6-437d-81bd-aa1450674f2c",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "07 · Refresh (rotación)",
+      "url": "http://localhost:3000/api/v1/auth/refresh",
+      "method": "POST",
+      "sortNum": 8000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ]
+    },
+    {
+      "_id": "a8cdc023-c84e-4db7-a783-146556877b06",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "08 · Logout",
+      "url": "http://localhost:3000/api/v1/auth/logout",
+      "method": "POST",
+      "sortNum": 9000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ]
+    },
+    {
+      "_id": "8595ddb9-c59c-4b3f-8f93-ff2159e710d9",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "cb2bb00c-7015-45a5-8e9a-da1d7dca6b02",
+      "name": "09 · Me tras logout (401)",
+      "url": "http://localhost:3000/api/v1/auth/me",
+      "method": "GET",
+      "sortNum": 10000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "401"
+        }
+      ]
+    },
+    {
+      "_id": "4eca7afd-ae62-442a-ad4f-e359d6cd60e9",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "10 · Listar máquinas",
+      "url": "http://localhost:3000/api/v1/machines",
+      "method": "GET",
+      "sortNum": 11000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ]
+    },
+    {
+      "_id": "dd19b24f-52ea-45e6-a15f-f1a34e982517",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "11 · Listar con filtros",
+      "url": "http://localhost:3000/api/v1/machines?status=operativa&type=bebidas&page=1&limit=5",
+      "method": "GET",
+      "sortNum": 12000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ]
+    },
+    {
+      "_id": "7fe33f6e-832c-4d59-9032-5b87b8341c98",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "12 · Crear máquina",
+      "url": "http://localhost:3000/api/v1/machines",
+      "method": "POST",
+      "sortNum": 13000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "201"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"code\": \"VM-010\",\n  \"model\": \"SnackMaster 3000\",\n  \"type\": \"snacks\",\n  \"location\": \"Sede Norte — Piso 1\",\n  \"slots\": 36,\n  \"lastRestockedAt\": \"2026-09-25T08:00:00.000Z\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "1b305749-70db-4424-9f39-403a0ca8bb01",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "13 · Crear código duplicado (409)",
+      "url": "http://localhost:3000/api/v1/machines",
+      "method": "POST",
+      "sortNum": 14000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "409"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"code\": \"VM-010\",\n  \"model\": \"Otra\",\n  \"type\": \"snacks\",\n  \"location\": \"Sede Sur\",\n  \"slots\": 20\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "cc455d0e-b53a-4f1a-aca5-d0d520f46073",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "14 · Crear payload inválido (400)",
+      "url": "http://localhost:3000/api/v1/machines",
+      "method": "POST",
+      "sortNum": 15000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "400"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"code\": \"XX-1\",\n  \"model\": \"A\",\n  \"type\": \"nave\",\n  \"location\": \"x\",\n  \"slots\": 0\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "353226b9-c69c-4810-9960-61215629aef3",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "15 · Detalle por id",
+      "url": "http://localhost:3000/api/v1/machines/PEGA_AQUI_EL_ID",
+      "method": "GET",
+      "sortNum": 16000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ]
+    },
+    {
+      "_id": "bccdcb83-8065-4351-9b67-3f03ddc50f89",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "16 · Detalle inexistente (404)",
+      "url": "http://localhost:3000/api/v1/machines/64b7f3c2a4d1e2f3a4b5c6d7",
+      "method": "GET",
+      "sortNum": 17000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "404"
+        }
+      ]
+    },
+    {
+      "_id": "64f89b0f-d864-480e-91aa-7c656170a1ad",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "17 · Actualizar (PATCH)",
+      "url": "http://localhost:3000/api/v1/machines/PEGA_AQUI_EL_ID",
+      "method": "PATCH",
+      "sortNum": 18000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"status\": \"mantenimiento\",\n  \"notes\": \"Compresor en revisión\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "d209bb2f-46f3-49c4-a92f-efa8eaf552eb",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "18 · Registrar recaudo retirado",
+      "url": "http://localhost:3000/api/v1/machines/PEGA_AQUI_EL_ID",
+      "method": "PATCH",
+      "sortNum": 19000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"cashBalanceCents\": 0\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "3872978c-256f-4753-94e5-6bc73a9524c3",
+      "colId": "9e111b9f-8a40-40e3-81f5-1c86d3f30ce4",
+      "containerId": "bf21e5a1-898a-4ded-bdd8-b4928ff8d1dd",
+      "name": "19 · Eliminar (204)",
+      "url": "http://localhost:3000/api/v1/machines/PEGA_AQUI_EL_ID",
+      "method": "DELETE",
+      "sortNum": 20000,
+      "created": "2026-09-26T15:00:00.000Z",
+      "modified": "2026-09-26T15:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "204"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "headers": [],
+    "tests": [],
+    "options": {
+      "baseUrl": "http://localhost:3000/api/v1"
+    }
+  }
+}

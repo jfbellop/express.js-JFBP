@@ -1,0 +1,34 @@
+══════════════════════════════════════════════════════════════════════
+  Ejercicio 02 — Refresh Tokens con rotación  (http://localhost:3116/api/v1)
+══════════════════════════════════════════════════════════════════════
+
+1. Registro y login
+  ✅ POST /auth/register → 201 — status=201
+  ✅ La respuesta no expone password ni refreshToken
+  ✅ POST /auth/login → 200 — status=200
+  ✅ Set-Cookie accessToken + refreshToken
+  ✅ accessToken es HttpOnly
+  ✅ refreshToken es HttpOnly
+  ✅ refreshToken limitado a Path=/api/v1/auth
+  ✅ Max-Age del access ≈ 15 min y del refresh ≈ 7 días — Max-Age=900 / Max-Age=604800
+
+2. Rotación de refresh token
+  ✅ POST /auth/refresh → 200 — status=200
+  ✅ Se emitió un refresh token NUEVO
+  ✅ Se emitió un access token NUEVO
+  ✅ Los dos tokens usan secretos distintos (firmas distintas)
+  ✅ El nuevo access token funciona en /auth/me → 200
+  ✅ Reutilizar el refresh token viejo → 401 — status=401
+  ✅ Refresh sin cookie → 401 — status=401
+
+3. Logout
+  ✅ POST /auth/logout → 200 — status=200
+  ✅ La respuesta limpia ambas cookies — accessToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT | refreshToken=; Path=/api/v1/auth; Expires=Thu, 01 Jan 1970 00:00:00 GMT
+  ✅ El cookie jar quedó vacío — cookies=0
+  ✅ Refresh después del logout → 401 (hash borrado en DB) — status=401
+  ✅ GET /auth/me sin cookies → 401
+
+══════════════════════════════════════════════════════════════════════
+  RESULTADO: 20 OK, 0 fallidas
+══════════════════════════════════════════════════════════════════════
+

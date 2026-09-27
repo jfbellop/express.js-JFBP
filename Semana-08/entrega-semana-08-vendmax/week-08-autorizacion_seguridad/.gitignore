@@ -1,0 +1,31 @@
+# ============================================================
+# Entrega Semana 08 - VendMax
+# ============================================================
+
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Compilados
+dist/
+build/
+
+# Variables de entorno - NUNCA subir: contienen los secretos JWT
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Cache del MongoDB embebido (pnpm mongo) y datos locales
+.cache/
+.mongo-data/
+mongodb-binaries/
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+*.swp

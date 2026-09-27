@@ -1,0 +1,12 @@
+MongoDB connected
+🧹 Limpiando colecciones...
+👤 Creando usuarios...
+🥤 Creando máquinas...
+
+✅ Seed completado
+   Usuarios: 3   |   Máquinas: 6
+   Admin    → admin@vendmax.co / Admin1234!      (role: admin)
+   Operador → operador@vendmax.co / Operador1234!   (role: user, 4 máquinas)
+   Técnico  → tecnico@vendmax.co / Tecnico1234!    (role: user, 2 máquinas)
+
+MongoDB disconnected

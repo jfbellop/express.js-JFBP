@@ -1,0 +1,107 @@
+===============================================================================
+ VendMax API - semana 08 | Evidencia de las capas de seguridad (curl)
+ Ejecutado: 2026-09-26 19:26 UTC  |  servidor local en :3000
+===============================================================================
+
+-------------------------------------------------------------------------------
+1) HELMET - cabeceras de seguridad en TODAS las respuestas
+   $ curl -i http://localhost:3000/api/v1/health
+-------------------------------------------------------------------------------
+HTTP/1.1 200 OK
+Content-Security-Policy: default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Origin-Agent-Cluster: ?1
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 99
+Date: Sat, 26 Sep 2026 19:26:29 GMT
+X-RateLimit-Reset: 1790451690
+RateLimit-Policy: 100;w=900
+RateLimit-Limit: 100
+RateLimit-Remaining: 99
+RateLimit-Reset: 900
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Content-Type: application/json; charset=utf-8
+Content-Length: 78
+ETag: W/"4e-yHf3HdYXmShof3FpgqBQCOp+b8k"
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+   -> x-powered-by: AUSENTE (helmet lo elimina: no se revela que es Express)
+
+-------------------------------------------------------------------------------
+2) RATE LIMITING GLOBAL - 100 peticiones / 15 min por IP
+   (se emiten los dos formatos: RateLimit-* draft-6 y X-RateLimit-* legacy)
+-------------------------------------------------------------------------------
+   peticion 1:
+     X-RateLimit-Limit: 100
+     X-RateLimit-Remaining: 98
+     X-RateLimit-Reset: 1790451690
+     RateLimit-Policy: 100;w=900
+     RateLimit-Limit: 100
+     RateLimit-Remaining: 98
+     RateLimit-Reset: 900
+   peticion 2:
+     X-RateLimit-Limit: 100
+     X-RateLimit-Remaining: 97
+     X-RateLimit-Reset: 1790451690
+     RateLimit-Policy: 100;w=900
+     RateLimit-Limit: 100
+     RateLimit-Remaining: 97
+     RateLimit-Reset: 900
+   peticion 3:
+     X-RateLimit-Limit: 100
+     X-RateLimit-Remaining: 96
+     X-RateLimit-Reset: 1790451690
+     RateLimit-Policy: 100;w=900
+     RateLimit-Limit: 100
+     RateLimit-Remaining: 96
+     RateLimit-Reset: 900
+
+-------------------------------------------------------------------------------
+3) CORS - whitelist (nunca '*')
+-------------------------------------------------------------------------------
+   3a) Origen PERMITIDO: http://localhost:5173
+     HTTP/1.1 200 OK
+     Access-Control-Allow-Origin: http://localhost:5173
+     Access-Control-Allow-Credentials: true
+
+   3b) Origen NO permitido: http://evil.com
+     {"error":"CORS: origin not allowed"}     status=403
+     -> sin cabecera access-control-allow-origin y respuesta 403
+
+   3c) Preflight OPTIONS desde el origen permitido
+     HTTP/1.1 204 No Content
+     Access-Control-Allow-Origin: http://localhost:5173
+     Access-Control-Allow-Credentials: true
+     Access-Control-Allow-Methods: GET,POST,PATCH,DELETE
+     Access-Control-Allow-Headers: Content-Type,Authorization
+
+-------------------------------------------------------------------------------
+4) SANITIZACION NoSQL - express-mongo-sanitize + Zod
+   $ curl -X POST .../auth/login -d {"email":{"$gt":""},"password":{"$gt":""}}
+-------------------------------------------------------------------------------
+     {"error":"Datos inválidos","details":{"formErrors":[],"fieldErrors":{"body":["Invalid input: expected string, received object","Invalid input: expected string, received object"]}}}
+     status=400
+     -> el operador $gt se elimina del objeto y el login NO se salta
+
+-------------------------------------------------------------------------------
+5) ERRORES SIN INFORMACION INTERNA
+-------------------------------------------------------------------------------
+   5a) Ruta inexistente:
+     {"error":"Route not found"}
+     status=404
+   5b) Id malformado:
+     {"error":"El id proporcionado no es válido"}
+     status=400
+   -> ni stack traces, ni rutas de archivos, ni nombres de colecciones

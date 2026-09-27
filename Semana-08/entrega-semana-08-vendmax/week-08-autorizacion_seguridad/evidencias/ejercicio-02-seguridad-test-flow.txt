@@ -1,0 +1,59 @@
+# Ejercicio 02 - Helmet + CORS + rate limiting + sanitizacion
+# Ejecutado: 2026-09-26 19:28 UTC
+# Comando: pnpm test:flow  (con 'pnpm mongo' y 'pnpm dev' corriendo en otras terminales)
+
+════════════════════════════════════════════════════════════════════════
+  Ejercicio 02 — Capas de seguridad HTTP  (http://localhost:3000/api/v1)
+════════════════════════════════════════════════════════════════════════
+
+1. Helmet — cabeceras de seguridad (PASO 1)
+  ✅ GET /health → 200 — status=200
+  ✅ X-Content-Type-Options: nosniff — nosniff
+  ✅ X-Frame-Options presente (anti clickjacking) — SAMEORIGIN
+  ✅ Strict-Transport-Security presente (HSTS) — max-age=31536000; includeSubDomains
+  ✅ Content-Security-Policy presente — default-src 'self';base-uri 'self';font-...
+  ✅ X-DNS-Prefetch-Control presente — off
+  ✅ X-Powered-By eliminado (no revela el stack) — x-powered-by=null
+
+2. Rate limiting global — 100 req / 15 min (PASO 2)
+  ✅ RateLimit-Limit = 100 — RateLimit-Limit=100
+  ✅ RateLimit-Remaining presente — RateLimit-Remaining=99
+  ✅ X-RateLimit-Remaining presente (formato legacy que pide la rúbrica) — X-RateLimit-Remaining=99
+  ✅ El contador baja en cada request — 99 → 98
+
+3. CORS con whitelist (PASO 4)
+  ✅ Origen permitido recibe Access-Control-Allow-Origin — http://localhost:5173
+  ✅ Access-Control-Allow-Credentials: true (necesario para cookies) — true
+  ✅ Origen NO permitido es rechazado (403, no 500) — status=403 {"error":"CORS: origin not allowed"}
+  ✅ Al origen bloqueado NO se le devuelve Access-Control-Allow-Origin — null
+  ✅ Preflight OPTIONS desde origen permitido → 204/200 — status=204
+  ✅ El preflight declara los métodos permitidos — GET,POST,PATCH,DELETE
+
+4. NoSQL injection — express-mongo-sanitize (PASO 5)
+  ✅ Login con operadores $gt NO autentica — status=400 {"error":"Validation failed","details":{"formErrors":[],"fieldErrors":{"body":["
+  ✅ Responde 400/401, nunca 500 ni un token — status=400
+  ✅ La respuesta no contiene accessToken
+  ✅ Los operadores en la query string tampoco rompen la API — status=200
+
+5. Login legítimo y errores sin stack trace
+  ✅ POST /auth/login con credenciales válidas → 200 — status=200
+  ✅ Devuelve accessToken
+  ✅ GET /users/dashboard con token → 200 — status=200
+  ✅ Ruta inexistente → 404 — status=404
+  ✅ El error no expone stack trace ni rutas internas — {"error":"Route not found"}
+
+6. Rate limit de autenticación — 5 intentos / 15 min (PASO 3)
+     (se agotan los intentos a propósito: el 6º debe dar 429)
+  ✅ Tras agotar los intentos responde 429 Too Many Requests — último status=429, primer 429 en el intento #4
+  ✅ El bloqueo se activa dentro de los primeros 6 intentos — intento=4
+  ✅ Ni con la contraseña correcta se pasa el bloqueo — status=429
+  ✅ El 429 trae un mensaje claro, sin detalles internos — {"error":"Too many login attempts, please try again later"}
+  ✅ El limitador de auth NO bloquea el resto de la API — GET /health status=200
+
+════════════════════════════════════════════════════════════════════════
+  RESULTADO: 31 pruebas OK, 0 fallidas
+════════════════════════════════════════════════════════════════════════
+
+  Nota: para repetir la prueba hay que reiniciar `pnpm dev`
+  (el rate limit de /login quedó agotado durante 15 minutos).
+

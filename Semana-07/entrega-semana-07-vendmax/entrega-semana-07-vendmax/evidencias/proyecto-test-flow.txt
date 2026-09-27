@@ -1,0 +1,61 @@
+════════════════════════════════════════════════════════════════════════
+  VendMax API — prueba end-to-end  (http://localhost:3115/api/v1)
+════════════════════════════════════════════════════════════════════════
+
+0. Healthcheck
+  ✅ GET /health → 200 — status=200
+
+1. Registro
+  ✅ POST /auth/register → 201 — status=201
+  ✅ La respuesta NO expone la contraseña
+  ✅ Email repetido → 409 — status=409
+  ✅ Contraseña débil → 400 — status=400
+
+2. Login y cookies HttpOnly
+  ✅ POST /auth/login → 200 — status=200
+  ✅ Set-Cookie accessToken con HttpOnly
+  ✅ Set-Cookie refreshToken con HttpOnly y Path=/api/v1/auth
+  ✅ El token NO viene en el body de la respuesta
+  ✅ Contraseña incorrecta → 401 — status=401
+  ✅ Mismo mensaje para email inexistente y clave errada (anti user-enumeration) — {"error":"Credenciales inválidas"}
+
+3. Ruta protegida /auth/me
+  ✅ GET /auth/me con cookie → 200 — status=200
+  ✅ GET /auth/me sin cookie → 401 — status=401
+
+4. CRUD de máquinas expendedoras
+  ✅ GET /machines sin cookie → 401 — status=401
+  ✅ POST /machines → 201 — status=201
+  ✅ La máquina creada trae _id y createdBy
+  ✅ Código duplicado → 409 — status=409
+  ✅ Payload inválido → 400 — status=400
+  ✅ GET /machines → 200 — status=200
+  ✅ El listado incluye la máquina creada — total=7
+  ✅ GET /machines/:id → 200 — status=200
+  ✅ GET /machines/:id inexistente → 404 — status=404
+  ✅ GET /machines/:id malformado → 400 — status=400
+  ✅ PATCH /machines/:id → 200 — status=200
+  ✅ El cambio se aplicó — status=mantenimiento
+  ✅ Regla de negocio: 'fuera_de_servicio' → 'operativa' bloqueado (409) — status=409
+  ✅ Regla de negocio: no se elimina con recaudo pendiente (409) — status=409
+
+5. Refresh token con rotación
+  ✅ POST /auth/refresh → 200 — status=200
+  ✅ El refresh token cambió (rotación)
+  ✅ El nuevo access token sirve → 200
+  ✅ Reutilizar el refresh token viejo → 401 — status=401
+
+6. Eliminación del recurso
+  ✅ DELETE /machines/:id → 204 — status=204
+  ✅ El recurso ya no existe → 404 — status=404
+
+7. Logout e invalidación en base de datos
+  ✅ POST /auth/logout → 200 — status=200
+  ✅ Las cookies se limpian en la respuesta
+  ✅ Refresh después de logout → 401 (hash borrado en DB) — status=401
+  ✅ GET /auth/me después de logout → 401 — status=401
+
+════════════════════════════════════════════════════════════════════════
+  RESULTADO: 37 pruebas OK, 0 fallidas
+════════════════════════════════════════════════════════════════════════
+

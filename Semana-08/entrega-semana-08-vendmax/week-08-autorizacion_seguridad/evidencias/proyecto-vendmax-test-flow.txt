@@ -1,0 +1,96 @@
+# Proyecto VendMax - RBAC + capas de seguridad (semana 08)
+# Ejecutado: 2026-09-26 19:28 UTC
+# Comando: pnpm test:flow  (con 'pnpm mongo' y 'pnpm dev' corriendo en otras terminales)
+
+════════════════════════════════════════════════════════════════════════════
+  VendMax API — semana 08: RBAC + seguridad  (http://localhost:3000/api/v1)
+════════════════════════════════════════════════════════════════════════════
+
+0. Capas de seguridad HTTP
+  ✅ GET /health → 200 — status=200
+  ✅ Helmet: X-Content-Type-Options nosniff
+  ✅ Helmet: X-Frame-Options presente — SAMEORIGIN
+  ✅ Helmet: Strict-Transport-Security presente
+  ✅ Helmet: Content-Security-Policy presente
+  ✅ Helmet: X-Powered-By eliminado
+  ✅ Rate limit: RateLimit-Limit = 100 — 100
+  ✅ Rate limit: X-RateLimit-Remaining presente — 99
+  ✅ CORS: origen de la whitelist recibe Allow-Origin
+  ✅ CORS: origen desconocido → 403 — status=403
+  ✅ CORS: al origen bloqueado no se le devuelve Allow-Origin
+  ✅ NoSQL injection ($gt) no autentica — status=400
+
+1. Lectura pública del catálogo (sin token)
+  ✅ GET /machines sin token → 200 — status=200
+  ✅ Indica acceso público — público
+  ✅ Devuelve el catálogo sembrado — total=6
+  ✅ El visitante anónimo NO ve el recaudo (cashBalanceCents)
+  ✅ El visitante anónimo NO ve quién es el dueño (createdBy)
+  ✅ Sí ve lo útil para el cliente (code, location, status)
+  ✅ GET /machines/:id sin token → 200 — status=200
+
+2. Escritura sin sesión: bloqueada
+  ✅ POST /machines sin token → 401 — status=401
+  ✅ PATCH /machines/:id sin token → 401 — status=401
+  ✅ DELETE /machines/:id sin token → 401 — status=401
+  ✅ GET /machines/reportes/recaudo sin token → 401 — status=401
+
+3. Login de los tres actores
+  ✅ Login operador (role: user) → token
+  ✅ Login técnico (role: user) → token
+  ✅ Login admin (role: admin) → token
+  ✅ El JWT del admin lleva role=admin — role=admin
+
+4. Visibilidad de campos según quién pregunta
+  ✅ Autenticado ve el dueño de cada máquina
+  ✅ El técnico NO ve el recaudo de una máquina ajena
+  ✅ El técnico SÍ ve el recaudo de SU máquina
+  ✅ El admin ve el recaudo de todas
+
+5. Crear máquina (autenticado, cualquier rol)
+  ✅ POST /machines con token → 201 — status=201
+  ✅ La máquina queda asociada a su creador
+  ✅ Código duplicado → 409 — status=409
+  ✅ Payload inválido → 400 (Zod) — status=400
+  ✅ HTML en los campos de texto → 400 (anti-XSS almacenado) — status=400
+  ✅ Regla de dominio: snacks con temperatura → 422 — status=422
+
+6. PATCH — dueño sí, otro usuario no, admin siempre
+  ✅ El DUEÑO puede editar su máquina → 200 — status=200
+  ✅ El cambio se aplicó
+  ✅ OTRO usuario autenticado NO puede editarla → 403 — status=403
+  ✅ El 403 explica el motivo sin filtrar datos internos — Solo el operador que registró la máquina o un admin pueden editarla
+  ✅ El ADMIN puede editar cualquier máquina → 200 — status=200
+  ✅ Regla de dominio: fuera_de_servicio → operativa bloqueado (409) — status=409
+  ✅ PATCH sin campos → 400 — status=400
+
+7. Rutas exclusivas de admin (requireRole)
+  ✅ Reporte con rol user → 403 — status=403
+  ✅ Reporte con rol admin → 200 — status=200
+  ✅ El reporte suma el recaudo total — total=1065950
+  ✅ Retirar recaudo con rol user → 403 (aunque sea SU máquina) — status=403
+  ✅ Retirar recaudo con rol admin → 200 — status=200
+  ✅ Devuelve cuánto se retiró — centavos=185400
+  ✅ Retirar recaudo dos veces → 409 (ya está en cero) — status=409
+
+8. DELETE — solo admin
+  ✅ El dueño NO puede eliminar su propia máquina → 403 — status=403
+  ✅ El admin elimina → 200 — status=200
+  ✅ La máquina ya no existe → 404 — status=404
+  ✅ Id malformado → 400 — status=400
+  ✅ No se elimina una máquina con recaudo pendiente → 409 — status=409
+
+9. Errores seguros y rate limit de autenticación
+  ✅ Ruta inexistente → 404 — status=404
+  ✅ Ningún error expone stack trace ni rutas internas — {"error":"Route not found"}
+     (se agotan los intentos de login a propósito: debe salir 429)
+  ✅ Fuerza bruta en /auth/login → 429 — status=429
+  ✅ El límite de auth no tumba el resto de la API — GET /machines status=200
+
+════════════════════════════════════════════════════════════════════════════
+  RESULTADO: 60 pruebas OK, 0 fallidas
+════════════════════════════════════════════════════════════════════════════
+
+  Nota: para repetir la prueba, reinicia `pnpm dev` y corre `pnpm seed`
+  (el rate limit de /auth queda agotado 15 minutos).
+

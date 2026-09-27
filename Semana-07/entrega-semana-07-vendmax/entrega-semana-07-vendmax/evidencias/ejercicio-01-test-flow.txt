@@ -1,0 +1,31 @@
+══════════════════════════════════════════════════════════════════════
+  Ejercicio 01 — Registro y Login  (http://localhost:3114/api/v1)
+══════════════════════════════════════════════════════════════════════
+
+1. Registro
+  ✅ POST /auth/register → 201 — status=201
+  ✅ La respuesta no incluye el campo password
+  ✅ La contraseña se guardó hasheada (no aparece en claro)
+  ✅ Email duplicado → 409 — status=409
+  ✅ Contraseña que no cumple la política → 400 — status=400
+
+2. Login
+  ✅ POST /auth/login → 200 — status=200
+  ✅ Set-Cookie accessToken presente
+  ✅ La cookie es HttpOnly
+  ✅ La cookie declara SameSite
+  ✅ El token NO viaja en el body
+  ✅ Contraseña incorrecta → 401 — status=401
+  ✅ Email inexistente → 401 — status=401
+  ✅ Mismo mensaje en ambos casos (anti user-enumeration) — {"message":"Credenciales inválidas"}
+
+3. Ruta protegida GET /auth/me
+  ✅ Con cookie válida → 200 — status=200
+  ✅ Devuelve el usuario sin password
+  ✅ Sin cookie → 401 — status=401
+  ✅ Con token manipulado → 401 — status=401
+
+══════════════════════════════════════════════════════════════════════
+  RESULTADO: 17 OK, 0 fallidas
+══════════════════════════════════════════════════════════════════════
+

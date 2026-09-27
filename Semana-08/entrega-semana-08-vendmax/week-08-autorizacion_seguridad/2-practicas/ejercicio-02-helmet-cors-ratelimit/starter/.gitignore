@@ -1,0 +1,18 @@
+node_modules/
+.pnpm-store/
+dist/
+build/
+
+# Variables de entorno - contienen los secretos JWT
+.env
+.env.local
+.env.*.local
+
+*.log
+.cache/
+.mongo-data/
+mongodb-binaries/
+
+.DS_Store
+Thumbs.db
+*.swp
