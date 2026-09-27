@@ -1,0 +1,29 @@
+node_modules/
+<<<<<<< HEAD
+.pnpm-store/
+dist/
+build/
+
+# Variables de entorno - NUNCA subir: contienen los secretos JWT
+# (el archivo .env SI viaja dentro del ZIP de la entrega, para que el
+#  evaluador pueda ejecutar el proyecto sin generar secretos)
+.env
+.env.local
+.env.*.local
+
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+.cache/
+.mongo-data/
+mongodb-binaries/
+
+.DS_Store
+Thumbs.db
+*.swp
+=======
+dist/
+.env
+*.log
+>>>>>>> 3339a8116a24bcc88df890a9c06c2e1a74cb61b8

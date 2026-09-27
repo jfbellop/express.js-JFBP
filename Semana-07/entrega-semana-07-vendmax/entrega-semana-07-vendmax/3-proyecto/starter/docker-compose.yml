@@ -1,0 +1,16 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: vendmax_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: vendmax
+      MONGO_INITDB_ROOT_PASSWORD: vendmax123
+      MONGO_INITDB_DATABASE: vendmax_dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - vendmax_mongo_data:/data/db
+
+volumes:
+  vendmax_mongo_data:
